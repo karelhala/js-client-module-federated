@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "generate": "openapi-generator-cli generate -i ./doc/simple.yml -g typescript-axios -o ./out --skip-validate-spec"
+    "generate": "openapi-generator-cli generate -i ./doc/simple.yml -o ./out --skip-validate-spec --custom-generator=./target/typescript-axios-webpack-module-federation-openapi-generator-1.0.0.jar -g typescript-axios-webpack-module-federation"
   },
   "repository": {
     "type": "git",

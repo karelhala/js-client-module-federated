@@ -1,1 +1,0 @@
-java -cp ../../OpenAPITools/openapi-generator/modules/openapi-generator-cli/target/openapi-generator-cli.jar:target/typescript-axios-webpack-module-federation-openapi-generator-1.0.0.jar org.openapitools.codegen.OpenAPIGenerator generate -g typescript-axios-webpack-module-federation -i doc/simple.yml --skip-validate-spec -o out
