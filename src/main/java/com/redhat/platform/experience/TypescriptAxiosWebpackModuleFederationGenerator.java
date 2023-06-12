@@ -81,7 +81,7 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
      */
     modelTemplateFiles.put(
       "model.mustache", // the template to use
-      ".sample");       // the extension for each file to write
+      ".ts");       // the extension for each file to write
 
     /**
      * Api classes.  You can write classes for each Api file with the apiTemplateFiles map.
@@ -97,16 +97,6 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
      * will use the resource stream to attempt to read the templates.
      */
     templateDir = "typescript-axios-webpack-module-federation";
-
-    /**
-     * Api Package.  Optional, if needed, this can be used in templates
-     */
-    apiPackage = "org.openapitools.api";
-
-    /**
-     * Model Package.  Optional, if needed, this can be used in templates
-     */
-    modelPackage = "org.openapitools.model";
 
     /**
      * Reserved words.  Override this with reserved words specific to your language
@@ -160,7 +150,12 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
    * instantiated
    */
   public String modelFileFolder() {
-    return outputFolder + "/" + sourceFolder + "/" + modelPackage().replace('.', File.separatorChar);
+    return outputFolder;
+  }
+
+  @Override
+  public String toModelFilename(String name) {
+      return name + File.separator + "index";
   }
 
   /**
@@ -169,7 +164,9 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
    */
   @Override
   public String apiFileFolder() {
-    return outputFolder + "/" + sourceFolder + "/" + apiPackage().replace('.', File.separatorChar);
+    System.out.println("This is output folder!" + outputFolder);
+    System.out.println("This is output folder!" + apiPackage());
+    return outputFolder;
   }
 
   /**
