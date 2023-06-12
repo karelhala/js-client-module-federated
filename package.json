@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/karelhala/js-client-module-federated/issues"
   },
-  "homepage": "https://github.com/karelhala/js-client-module-federated#readme"
+  "homepage": "https://github.com/karelhala/js-client-module-federated#readme",
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.6.0"
+  }
 }
