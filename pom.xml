@@ -2,9 +2,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.openapitools</groupId>
-    <artifactId>typescript-axios-module-federation-openapi-generator</artifactId>
+    <artifactId>typescript-axios-webpack-module-federation-openapi-generator</artifactId>
     <packaging>jar</packaging>
-    <name>typescript-axios-module-federation-openapi-generator</name>
+    <name>typescript-axios-webpack-module-federation-openapi-generator</name>
     <version>1.0.0</version>
     <build>
         <plugins>

@@ -11,11 +11,11 @@ import org.openapitools.codegen.config.CodegenConfigurator;
  * and then see the results in the out directory.
  *
  * To experiment with debugging your code generator:
- * 1) Set a break point in TypescriptAxiosModuleFederationGenerator.java in the postProcessOperationsWithModels() method.
+ * 1) Set a break point in TypescriptAxiosWebpackModuleFederationGenerator.java in the postProcessOperationsWithModels() method.
  * 2) To launch this test in Eclipse: right-click | Debug As | JUnit Test
  *
  */
-public class TypescriptAxiosModuleFederationGeneratorTest {
+public class TypescriptAxiosWebpackModuleFederationGeneratorTest {
 
   // use this test to launch you code generator in the debugger.
   // this allows you to easily set break points in MyclientcodegenGenerator.
@@ -24,10 +24,10 @@ public class TypescriptAxiosModuleFederationGeneratorTest {
     // to understand how the 'openapi-generator-cli' module is using 'CodegenConfigurator', have a look at the 'Generate' class:
     // https://github.com/OpenAPITools/openapi-generator/blob/master/modules/openapi-generator-cli/src/main/java/org/openapitools/codegen/cmd/Generate.java
     final CodegenConfigurator configurator = new CodegenConfigurator()
-              .setGeneratorName("typescript-axios-module-federation") // use this codegen library
+              .setGeneratorName("typescript-axios-webpack-module-federation") // use this codegen library
               .setInputSpec("../../../modules/openapi-generator/src/test/resources/2_0/petstore.yaml") // sample OpenAPI file
               // .setInputSpec("https://raw.githubusercontent.com/openapitools/openapi-generator/master/modules/openapi-generator/src/test/resources/2_0/petstore.yaml") // or from the server
-              .setOutputDir("out/typescript-axios-module-federation"); // output directory
+              .setOutputDir("out/typescript-axios-webpack-module-federation"); // output directory
 
     final ClientOptInput clientOptInput = configurator.toClientOptInput();
     DefaultGenerator generator = new DefaultGenerator();

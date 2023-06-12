@@ -7,7 +7,7 @@ import io.swagger.models.properties.*;
 import java.util.*;
 import java.io.File;
 
-public class TypescriptAxiosModuleFederationGenerator extends DefaultCodegen implements CodegenConfig {
+public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCodegen implements CodegenConfig {
 
   // source folder where to write the files
   protected String sourceFolder = "src";
@@ -30,7 +30,7 @@ public class TypescriptAxiosModuleFederationGenerator extends DefaultCodegen imp
    * @return the friendly name for the generator
    */
   public String getName() {
-    return "typescript-axios-module-federation";
+    return "typescript-axios-webpack-module-federation";
   }
 
   /**
@@ -64,14 +64,14 @@ public class TypescriptAxiosModuleFederationGenerator extends DefaultCodegen imp
    * @return A string value for the help message
    */
   public String getHelp() {
-    return "Generates a typescript-axios-module-federation client library.";
+    return "Generates a typescript-axios-webpack-module-federation client library.";
   }
 
-  public TypescriptAxiosModuleFederationGenerator() {
+  public TypescriptAxiosWebpackModuleFederationGenerator() {
     super();
 
     // set the output folder here
-    outputFolder = "generated-code/typescript-axios-module-federation";
+    outputFolder = "generated-code/typescript-axios-webpack-module-federation";
 
     /**
      * Models.  You can write model files using the modelTemplateFiles map.
@@ -96,7 +96,7 @@ public class TypescriptAxiosModuleFederationGenerator extends DefaultCodegen imp
      * Template Location.  This is the location which templates will be read from.  The generator
      * will use the resource stream to attempt to read the templates.
      */
-    templateDir = "typescript-axios-module-federation";
+    templateDir = "typescript-axios-webpack-module-federation";
 
     /**
      * Api Package.  Optional, if needed, this can be used in templates
