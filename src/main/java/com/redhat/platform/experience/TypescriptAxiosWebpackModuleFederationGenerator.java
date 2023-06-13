@@ -1,8 +1,13 @@
 package com.redhat.platform.experience;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.CaseUtils;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.model.*;
-import io.swagger.models.properties.*;
+
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.PathItem;
 
 import java.util.*;
 import java.io.File;
@@ -90,7 +95,10 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
      */
     apiTemplateFiles.put(
       "api.mustache",   // the template to use
-      ".sample");       // the extension for each file to write
+      "index.ts");       // the extension for each file to write
+    apiTemplateFiles.put(
+      "package.mustache",   // the template to use
+      "package.sample");       // the extension for each file to write
 
     /**
      * Template Location.  This is the location which templates will be read from.  The generator
@@ -118,9 +126,9 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
      * entire object tree available.  If the input file has a suffix of `.mustache
      * it will be processed by the template engine.  Otherwise, it will be copied
      */
-    supportingFiles.add(new SupportingFile("myFile.mustache",   // the input template or file
+    supportingFiles.add(new SupportingFile("index.mustache",   // the input template or file
       "",                                                       // the destination folder, relative `outputFolder`
-      "myFile.sample")                                          // the output file
+      "index.ts")                                          // the output file
     );
 
     /**
@@ -145,28 +153,66 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
     return "_" + name;  // add an underscore to the name
   }
 
-  /**
-   * Location to write model files.  You can use the modelPackage() as defined when the class is
-   * instantiated
-   */
-  public String modelFileFolder() {
-    return outputFolder;
-  }
-
   @Override
   public String toModelFilename(String name) {
-      return name + File.separator + "index";
+      return "models" + File.separator + name + File.separator + "index";
+  }
+
+  @Override
+  public String toApiFilename(String name) {
+      return name + File.separator;
   }
 
   /**
-   * Location to write api files.  You can use the apiPackage() as defined when the class is
-   * instantiated
-   */
+     * Get operationId from the operation object, and if it's blank, generate a new one from the given parameters.
+     *
+     * @param operation  the operation object
+     * @param path       the path of the operation
+     * @param httpMethod the HTTP method of the operation
+     * @return the (generated) operationId
+     */
+    protected String getOrGenerateOperationId(Operation operation, String path, String httpMethod) {
+      String operationId = operation.getOperationId();
+      if (StringUtils.isBlank(operationId)) {
+          String tmpPath = path;
+          tmpPath = tmpPath.replaceAll("\\{", "");
+          tmpPath = tmpPath.replaceAll("\\}", "");
+          String[] parts = (tmpPath + "/" + httpMethod).split("/");
+          StringBuilder builder = new StringBuilder();
+          if ("/".equals(tmpPath)) {
+              // must be root tmpPath
+              builder.append("root");
+          }
+          for (String part : parts) {
+              if (part.length() > 0) {
+                  if (builder.toString().length() == 0) {
+                      part = Character.toLowerCase(part.charAt(0)) + part.substring(1);
+                  } else {
+                      part = CaseUtils.toCamelCase(part, true);
+                  }
+                  builder.append(part);
+              }
+          }
+          operationId = sanitizeName(builder.toString());
+      }
+      return operationId;
+  }
+
   @Override
-  public String apiFileFolder() {
-    System.out.println("This is output folder!" + outputFolder);
-    System.out.println("This is output folder!" + apiPackage());
-    return outputFolder;
+  public void preprocessOpenAPI(OpenAPI openAPI) {
+      Map<String, PathItem> pathItems = openAPI.getPaths();
+      if (pathItems != null) {
+        for (Map.Entry<String, PathItem> e : pathItems.entrySet()) {
+          for (Map.Entry<PathItem.HttpMethod, Operation> op : e.getValue().readOperationsMap().entrySet()) {
+            System.out.println("=========== This is tags! " + op.getValue().getTags());
+            System.out.println("=========== This is key! " + op.getKey());
+            List<String> tags = new ArrayList<String>();
+            tags.add(getOrGenerateOperationId(op.getValue(), e.getKey(), op.getKey().toString()));
+            op.getValue().setTags(tags);
+          }
+        }
+      }
+      super.preprocessOpenAPI(openAPI);
   }
 
   /**
