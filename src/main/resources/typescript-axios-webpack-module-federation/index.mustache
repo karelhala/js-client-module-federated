@@ -1,12 +1,7 @@
 // This is a sample supporting file mustache template.
 {{#apiInfo.apis}}
-  // operations block
 {{#operations}}
-
-// loop over each operation in the API:
 {{#operation}}
-
-// each operation has an `operationId`:
 export * from './{{#lambda.titlecase}}{{operationId}}{{/lambda.titlecase}}'
 
 {{/operation}}
