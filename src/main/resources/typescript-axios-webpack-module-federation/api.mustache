@@ -20,7 +20,7 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from '../base';
   * @deprecated{{/isDeprecated}}
   * @throws {RequiredError}
   */
-export const {{nickname}}ParamCreator = async ({{#allParams.0}}{{=<% %>=}}{<%#allParams%><%paramName%><%^-last%>, <%/-last%> <%/allParams%>}:<%={{ }}=%> {{=<% %>=}}{<%={{ }}=%>{{#allParams}}{{paramName}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}{{^-last}}, {{/-last}} {{/allParams}}{{=<% %>=}}}<%={{ }}=%>, {{/allParams.0}}options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+export const {{nickname}}ParamCreator = async ({{#allParams.0}}{{=<% %>=}}{<%#allParams%><%#-first%> <%/-first%><%paramName%><%^-last%>, <%/-last%> <%/allParams%>}:<%={{ }}=%> {{=<% %>=}}{<%={{ }}=%>{{#allParams}}{{#-first}} {{/-first}}{{paramName}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}{{^-last}}, {{/-last}} {{/allParams}}{{=<% %>=}}}<%={{ }}=%>, {{/allParams.0}}options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
 {{#allParams}}
 {{#required}}
     // verify required parameter '{{paramName}}' is not null or undefined
