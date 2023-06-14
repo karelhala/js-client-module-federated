@@ -134,6 +134,10 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
       "",                                                       // the destination folder, relative `outputFolder`
       "common.ts")                                          // the output file
     );
+    supportingFiles.add(new SupportingFile("baseApi.mustache",   // the input template or file
+    "",                                                       // the destination folder, relative `outputFolder`
+    "base.ts")                                          // the output file
+    );
 
     /**
      * Language Specific Primitives.  These types will not trigger imports by

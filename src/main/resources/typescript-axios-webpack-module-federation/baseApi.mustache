@@ -1,0 +1,31 @@
+/* tslint:disable */
+/* eslint-disable */
+
+import type { Configuration } from './configuration';
+// Some imports not used depending on template conditions
+// @ts-ignore
+import type { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import globalAxios from 'axios';
+
+export const BASE_PATH = "{{{basePath}}}".replace(/\/+$/, "");
+
+/**
+ *
+ * @export
+ */
+export const COLLECTION_FORMATS = {
+    csv: ",",
+    ssv: " ",
+    tsv: "\t",
+    pipes: "|",
+};
+
+/**
+ *
+ * @export
+ * @interface RequestArgs
+ */
+export interface RequestArgs {
+    url: string;
+    options: AxiosRequestConfig;
+}

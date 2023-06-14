@@ -24,6 +24,22 @@ paths:
   /fooBar:
     get:
       description: "Returns all foo bar from the system that the user has access to"
+      parameters:
+        - $ref: '#/components/parameters/groupName'
+          x-scope:
+            - ''
+        - $ref: '#/components/parameters/perPageParam'
+          x-scope:
+            - ''
+        - $ref: '#/components/parameters/pageParam'
+          x-scope:
+            - ''
+        - $ref: '#/components/parameters/groupOrderByParam'
+          x-scope:
+            - ''
+        - $ref: '#/components/parameters/groupOrderHowParam'
+          x-scope:
+            - ''
       responses:
         "200":
           description: "A list of foo bars."
@@ -72,3 +88,51 @@ components:
           type: "string"
         tag:
           type: "string"
+  parameters:
+    groupName:
+      description: Filter by group name
+      in: query
+      name: name
+      required: false
+      schema:
+        type: string
+    perPageParam:
+      description: A number of items to return per page.
+      in: query
+      name: per_page
+      required: false
+      schema:
+        default: 50
+        maximum: 100
+        minimum: 1
+        type: integer
+    groupOrderByParam:
+      description: Ordering field name
+      in: query
+      name: order_by
+      required: false
+      schema:
+        enum:
+          - name
+          - host_ids
+        type: string
+    groupOrderHowParam:
+      description: Direction of the ordering; defaults to ASC for name, and to DESC for host_ids
+      in: query
+      name: order_how
+      required: false
+      schema:
+        enum:
+          - ASC
+          - DESC
+        type: string
+    pageParam:
+      description: A page number of the items to return.
+      in: query
+      name: page
+      required: false
+      schema:
+        default: 1
+        maximum: 21474837
+        minimum: 1
+        type: integer
