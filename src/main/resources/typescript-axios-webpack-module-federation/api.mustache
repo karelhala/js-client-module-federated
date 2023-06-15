@@ -6,21 +6,78 @@ import type { RequestArgs } from '../base';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from '../base';
 
+{{#models}}
+{{#model}}{{#isEnum}}{{>modelEnum}}{{/isEnum}}{{#oneOf}}{{#-first}}{{>modelOneOf}}{{/-first}}{{/oneOf}}{{^isEnum}}{{^oneOf}}{{>modelGeneric}}{{/oneOf}}{{/isEnum}}{{/model}}
+{{/models}}
+
+{{^listParam}}
 {{#operations}}
 {{#operation}}
-/**
-  * {{&notes}}
-  {{#summary}}
-  * @summary {{&summary}}
-  {{/summary}}
+{{#allParams.0}}
+export type {{operationIdCamelCase}}Params = {
   {{#allParams}}
-  * @param {{=<% %>=}}{<%#isEnum%><%&datatypeWithEnum%><%/isEnum%><%^isEnum%><%&dataType%><%#isNullable%> | null<%/isNullable%><%/isEnum%>}<%={{ }}=%> {{^required}}[{{/required}}{{paramName}}{{^required}}]{{/required}} {{description}}
-  {{/allParams}}
-  * @param {*} [options] Override http request option.{{#isDeprecated}}
-  * @deprecated{{/isDeprecated}}
-  * @throws {RequiredError}
+  /**
+  * {{{description}}}
+  * @type {{=<% %>=}}{ <%={{ }}=%>{{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}{{=<% %>=}} }<%={{ }}=%>
+  * @memberof {{classname}}
+{{#deprecated}}
+  * @deprecated
+{{/deprecated}}
   */
-export const {{nickname}}ParamCreator = async ({{#allParams.0}}{{=<% %>=}}{<%#allParams%><%#-first%> <%/-first%><%paramName%><%^-last%>, <%/-last%> <%/allParams%>}:<%={{ }}=%> {{=<% %>=}}{<%={{ }}=%>{{#allParams}}{{#-first}} {{/-first}}{{paramName}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}{{^-last}}, {{/-last}} {{/allParams}}{{=<% %>=}}}<%={{ }}=%>, {{/allParams.0}}options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+  {{paramName}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}{{^-last}}, {{/-last}}
+  {{/allParams}}
+}
+{{#allParams}}
+{{#isEnum}}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum {{operationIdCamelCase}}{{enumName}} {
+{{#allowableValues}}
+    {{#enumVars}}
+    {{{name}}} = {{{value}}}{{^-last}},{{/-last}}
+    {{/enumVars}}
+{{/allowableValues}}
+}
+export type {{operationIdCamelCase}}{{enumName}}Type = typeof {{operationIdCamelCase}}{{enumName}}[keyof typeof {{operationIdCamelCase}}{{enumName}}];
+{{/isEnum}}
+{{/allParams}}
+{{/allParams.0}}
+{{/operation}}
+{{/operations}}
+{{/listParam}}
+
+{{#operations}}
+{{#operation}}
+{{#listParam}}
+/**
+* {{&notes}}
+{{#summary}}
+* @summary {{&summary}}
+{{/summary}}
+{{#allParams}}
+* @param {{=<% %>=}}{<%#isEnum%><%&datatypeWithEnum%><%/isEnum%><%^isEnum%><%&dataType%><%#isNullable%> | null<%/isNullable%><%/isEnum%>}<%={{ }}=%> {{^required}}[{{/required}}{{paramName}}{{^required}}]{{/required}} {{description}}
+{{/allParams}}
+* @param {*} [options] Override http request option.{{#isDeprecated}}
+* @deprecated{{/isDeprecated}}
+* @throws {RequiredError}
+*/
+export const {{nickname}}ParamCreator = async ({{#allParams}}{{paramName}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}, {{/allParams}}options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+{{/listParam}}
+{{^listParam}}
+/**
+* {{&notes}}
+{{#summary}}
+* @summary {{&summary}}
+{{/summary}}
+* @param {{=<% %>=}}{<%operationIdCamelCase%>Params}<%={{ }}=%> config with all available params.
+* @param {*} [options] Override http request option.{{#isDeprecated}}
+* @deprecated{{/isDeprecated}}
+* @throws {RequiredError}
+*/
+export const {{nickname}}ParamCreator = async ({{#allParams.0}}{{=<% %>=}}{<%#allParams%><%#-first%> <%/-first%><%paramName%><%^-last%>, <%/-last%> <%/allParams%>}:<%={{ }}=%> {{operationIdCamelCase}}Params, {{/allParams.0}}options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+{{/listParam}}
 {{#allParams}}
 {{#required}}
     // verify required parameter '{{paramName}}' is not null or undefined

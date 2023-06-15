@@ -3,20 +3,32 @@ package com.redhat.platform.experience;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CaseUtils;
 import org.openapitools.codegen.*;
-import org.openapitools.codegen.model.*;
 
+
+import org.openapitools.codegen.meta.features.DocumentationFeature;
+import org.openapitools.codegen.meta.features.SecurityFeature;
+
+import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.parser.util.SchemaTypeUtil;
 
 import java.util.*;
 import java.io.File;
+
+import org.openapitools.codegen.model.ModelMap;
+import org.openapitools.codegen.model.ModelsMap;
+import org.openapitools.codegen.model.OperationMap;
+import org.openapitools.codegen.model.OperationsMap;
+import org.openapitools.codegen.utils.ModelUtils;
 
 public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCodegen implements CodegenConfig {
 
   // source folder where to write the files
   protected String sourceFolder = "src";
   protected String apiVersion = "1.0.0";
+  public static final String LIST_PARAM = "listParam";
 
   /**
    * Configures the type of generator.
@@ -39,30 +51,6 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
   }
 
   /**
-   * Provides an opportunity to inspect and modify operation data before the code is generated.
-   */
-  @Override
-  public OperationsMap postProcessOperationsWithModels(OperationsMap objs, List<ModelMap> allModels) {
-
-    // to try debugging your code generator:
-    // set a break point on the next line.
-    // then debug the JUnit test called LaunchGeneratorInDebugger
-
-    OperationsMap results = super.postProcessOperationsWithModels(objs, allModels);
-
-    OperationMap ops = results.getOperations();
-    List<CodegenOperation> opList = ops.getOperation();
-
-    // iterate over the operation and perhaps modify something
-    for(CodegenOperation co : opList){
-      // example:
-      // co.httpMethod = co.httpMethod.toLowerCase();
-    }
-
-    return results;
-  }
-
-  /**
    * Returns human-friendly help for the generator.  Provide the consumer with help
    * tips, parameters here
    *
@@ -74,6 +62,16 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
 
   public TypescriptAxiosWebpackModuleFederationGenerator() {
     super();
+
+    modifyFeatureSet(features -> features
+                .includeDocumentationFeatures(DocumentationFeature.Readme)
+                .includeSecurityFeatures(SecurityFeature.BearerToken));
+
+        // clear import mapping (from default generator) as TS does not use it
+        // at the moment
+        importMapping.clear();
+
+        reservedWords.add("options");
 
     // set the output folder here
     outputFolder = "generated-code/typescript-axios-webpack-module-federation";
@@ -138,6 +136,10 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
     "",                                                       // the destination folder, relative `outputFolder`
     "base.ts")                                          // the output file
     );
+    supportingFiles.add(new SupportingFile("indexTypes.mustache",   // the input template or file
+    "types",                                                       // the destination folder, relative `outputFolder`
+    "index.ts")                                          // the output file
+    );
 
     /**
      * Language Specific Primitives.  These types will not trigger imports by
@@ -148,6 +150,8 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
         "Type1",      // replace these with your types
         "Type2")
     );
+
+    this.cliOptions.add(new CliOption(LIST_PARAM, "Setting this property to true will generate APIs with list of params.", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
   }
 
   /**
@@ -163,7 +167,7 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
 
   @Override
   public String toModelFilename(String name) {
-      return "models" + File.separator + name + File.separator + "index";
+      return "types" + File.separator + name;
   }
 
   @Override
@@ -245,5 +249,106 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
   public String escapeQuotationMark(String input) {
     //TODO: check that this logic is safe to escape quotation mark to avoid code injection
     return input.replace("\"", "\\\"");
+  }
+
+  /**
+   * Overriding toRegularExpression() to avoid escapeText() being called,
+   * as it would return a broken regular expression if any escaped character / metacharacter were present.
+   */
+  @Override
+  public String toRegularExpression(String pattern) {
+      return addRegularExpressionDelimiter(pattern);
+  }
+
+  @Override
+  protected void updatePropertyForAnyType(CodegenProperty property, Schema p) {
+      // The 'null' value is allowed when the OAS schema is 'any type'.
+      // See https://github.com/OAI/OpenAPI-Specification/issues/1389
+      // custom line here, do not set property.isNullable = true
+      if (languageSpecificPrimitives.contains(property.dataType)) {
+          property.isPrimitiveType = true;
+      }
+      if (ModelUtils.isMapSchema(p)) {
+          // an object or anyType composed schema that has additionalProperties set
+          // some of our code assumes that any type schema with properties defined will be a map
+          // even though it should allow in any type and have map constraints for properties
+          updatePropertyForMap(property, p);
+      }
+  }
+
+  @Override
+  public OperationsMap postProcessOperationsWithModels(OperationsMap objs, List<ModelMap> allModels) {
+      objs = super.postProcessOperationsWithModels(objs, allModels);
+      this.updateOperationParameterForEnum(objs);
+      OperationMap vals = objs.getOperations();
+      List<CodegenOperation> operations = vals.getOperation();
+      /*
+          Filter all the operations that are multipart/form-data operations and set the vendor extension flag
+          'multipartFormData' for the template to work with.
+        */
+      operations.stream()
+              .filter(op -> op.hasConsumes)
+              .filter(op -> op.consumes.stream().anyMatch(opc -> opc.values().stream().anyMatch("multipart/form-data"::equals)))
+              .forEach(op -> op.vendorExtensions.putIfAbsent("multipartFormData", true));
+
+      return objs;
+  }
+
+  private void updateOperationParameterForEnum(OperationsMap operations) {
+      // This method will add extra information as to whether or not we have enums and
+      // update their names with the operation.id prefixed.
+      // It will also set the uniqueId status if provided.
+      for (CodegenOperation op : operations.getOperations().getOperation()) {
+          for (CodegenParameter param : op.allParams) {
+              if (Boolean.TRUE.equals(param.isEnum)) {
+                  param.datatypeWithEnum = param.datatypeWithEnum
+                          .replace(param.enumName, op.operationIdCamelCase + param.enumName);
+              }
+          }
+      }
+  }
+
+  @Override
+  public Map<String, ModelsMap> postProcessAllModels(Map<String, ModelsMap> objs) {
+      Map<String, ModelsMap> result = super.postProcessAllModels(objs);
+      for (ModelsMap entry : result.values()) {
+          for (ModelMap model : entry.getModels()) {
+              CodegenModel codegenModel = model.getModel();
+              model.put("hasAllOf", codegenModel.allOf.size() > 0);
+              model.put("hasOneOf", codegenModel.oneOf.size() > 0);
+          }
+      }
+      return result;
+  }
+
+  @Override
+  public void postProcessParameter(CodegenParameter parameter) {
+      super.postProcessParameter(parameter);
+      if (parameter.isFormParam && parameter.isArray && "binary".equals(parameter.dataFormat)) {
+          parameter.isCollectionFormatMulti = true;
+      }
+  }
+
+  @Override
+  public ModelsMap postProcessModels(ModelsMap objs) {
+      List<ModelMap> models = postProcessModelsEnum(objs).getModels();
+      for (ModelMap mo  : models) {
+        CodegenModel cm = mo.getModel();
+
+        // Deduce the model file name in kebab case
+        cm.classFilename = cm.classname.replaceAll("([a-z0-9])([A-Z])", "$1-$2").toLowerCase(Locale.ROOT);
+
+        System.out.println("==========");
+        System.out.println("==========This is CM ->" + cm);
+        System.out.println("==========");
+    }
+
+    // Apply the model file name to the imports as well
+    for (Map<String, String> m : objs.getImports()) {
+        String javaImport = m.get("import").substring(modelPackage.length() + 1);
+        m.put("class", javaImport);
+        m.put("filename", javaImport.replaceAll("([a-z0-9])([A-Z])", "$1-$2").toLowerCase(Locale.ROOT));
+    }
+    return objs;
   }
 }
