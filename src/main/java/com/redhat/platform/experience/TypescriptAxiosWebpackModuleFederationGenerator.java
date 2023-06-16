@@ -3,7 +3,6 @@ package com.redhat.platform.experience;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CaseUtils;
 import org.openapitools.codegen.*;
-import org.openapitools.codegen.languages.AbstractTypeScriptClientCodegen;
 import org.openapitools.codegen.languages.TypeScriptAxiosClientCodegen;
 import org.openapitools.codegen.meta.features.DocumentationFeature;
 import org.openapitools.codegen.meta.features.SecurityFeature;
@@ -82,7 +81,7 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends TypeScriptA
      * class
      */
     apiTemplateFiles.put(
-      "api.mustache",   // the template to use
+      "coreApi.mustache",   // the template to use
       "index.ts");       // the extension for each file to write
     apiTemplateFiles.put(
       "package.mustache",   // the template to use
@@ -118,11 +117,11 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends TypeScriptA
       "",                                                       // the destination folder, relative `outputFolder`
       "index.ts")                                          // the output file
     );
-    supportingFiles.add(new SupportingFile("common.mustache",
+    supportingFiles.add(new SupportingFile("utilCommon.mustache",
       "utils",                         
       "common.ts")   
     );
-    supportingFiles.add(new SupportingFile("baseApi.mustache",
+    supportingFiles.add(new SupportingFile("utilBaseApi.mustache",
     "utils",
     "base.ts") 
     );
