@@ -4,7 +4,7 @@
 import type { Configuration } from './configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import type { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { AxiosPromise, AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
 
 export const BASE_PATH = "{{{basePath}}}".replace(/\/+$/, "");
@@ -29,6 +29,39 @@ export interface RequestArgs {
     url: string;
     options: AxiosRequestConfig;
 }
+
+/**
+ * Base API to store config, basepath and axios instance.
+ * @export
+ * @class BaseAPI
+ */
+export class BaseAPI {
+    protected configuration: Configuration | undefined;
+
+  /**
+   * Constructor to create baseAPI.
+   * @param { Configuration } configuration optional configuration for each request made with this API.
+   * @param { string } basePath basePath of api requests.
+   * @param { AxiosInstance } axios axios instance, global one is used as fallback
+   */
+    constructor(configuration?: Configuration, protected basePath: string = BASE_PATH, protected axios: AxiosInstance = globalAxios) {
+        if (configuration) {
+            this.configuration = configuration;
+            this.basePath = configuration.basePath || this.basePath;
+        }
+    }
+
+   /**
+   * Send axios request
+   * @param {Promise<RequestArgs>} request to be send trough axios.
+   * @param {AxiosInstance} axios optional axios instance.
+   * @returns {Promise<AxiosResponse<T>>} promisable axios response.
+   */
+    public async sendRequest<T>(request: Promise<RequestArgs>, axios?: AxiosInstance, basePath?: string): Promise<AxiosResponse<T>> {
+      const axiosRequestArgs = { ...(await request).options, url: (this.basePath || basePath) + (await request).url };
+      return (axios || this.axios).request<T>(axiosRequestArgs);
+    }
+};
 
 /**
  *

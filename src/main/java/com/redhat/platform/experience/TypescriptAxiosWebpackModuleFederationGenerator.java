@@ -3,8 +3,7 @@ package com.redhat.platform.experience;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CaseUtils;
 import org.openapitools.codegen.*;
-
-
+import org.openapitools.codegen.languages.AbstractTypeScriptClientCodegen;
 import org.openapitools.codegen.meta.features.DocumentationFeature;
 import org.openapitools.codegen.meta.features.SecurityFeature;
 
@@ -23,7 +22,7 @@ import org.openapitools.codegen.model.OperationMap;
 import org.openapitools.codegen.model.OperationsMap;
 import org.openapitools.codegen.utils.ModelUtils;
 
-public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCodegen implements CodegenConfig {
+public class TypescriptAxiosWebpackModuleFederationGenerator extends AbstractTypeScriptClientCodegen {
 
   // source folder where to write the files
   protected String sourceFolder = "src";
@@ -96,7 +95,7 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
       "index.ts");       // the extension for each file to write
     apiTemplateFiles.put(
       "package.mustache",   // the template to use
-      "package.sample");       // the extension for each file to write
+      "package.json");       // the extension for each file to write
 
     /**
      * Template Location.  This is the location which templates will be read from.  The generator
@@ -128,18 +127,34 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
       "",                                                       // the destination folder, relative `outputFolder`
       "index.ts")                                          // the output file
     );
-    supportingFiles.add(new SupportingFile("common.mustache",   // the input template or file
-      "",                                                       // the destination folder, relative `outputFolder`
-      "common.ts")                                          // the output file
+    supportingFiles.add(new SupportingFile("common.mustache",
+      "base",                         
+      "common.ts")   
     );
-    supportingFiles.add(new SupportingFile("baseApi.mustache",   // the input template or file
-    "",                                                       // the destination folder, relative `outputFolder`
-    "base.ts")                                          // the output file
+    supportingFiles.add(new SupportingFile("baseApi.mustache",
+    "base",
+    "base.ts") 
     );
-    supportingFiles.add(new SupportingFile("indexTypes.mustache",   // the input template or file
-    "types",                                                       // the destination folder, relative `outputFolder`
-    "index.ts")                                          // the output file
+    supportingFiles.add(new SupportingFile("indexTypes.mustache",
+    "types", 
+    "index.ts")
     );
+    supportingFiles.add(new SupportingFile("configuration.mustache",
+    "base",
+    "configuration.ts")
+    );
+    supportingFiles.add(new SupportingFile("baseIndex.mustache",
+    "base",
+    "index.ts")
+    );
+    supportingFiles.add(new SupportingFile("package.mustache",
+    "base",
+    "package.json")
+    );
+    supportingFiles.add(new SupportingFile(".npmignore", "", ".npmignore").doNotOverwrite());
+    supportingFiles.add(new SupportingFile("package.json", "", "package.json").doNotOverwrite());
+    supportingFiles.add(new SupportingFile("tsconfig-cjs.json", "", "tsconfig-cjs.json").doNotOverwrite());
+    supportingFiles.add(new SupportingFile("tsconfig-esm.json", "", "tsconfig-esm.json").doNotOverwrite());
 
     /**
      * Language Specific Primitives.  These types will not trigger imports by
@@ -151,7 +166,7 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
         "Type2")
     );
 
-    this.cliOptions.add(new CliOption(LIST_PARAM, "Setting this property to true will generate APIs with list of params.", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
+    this.cliOptions.add(new CliOption(LIST_PARAM, "Setting this property to true will generate APIs with list of params.", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.TRUE.toString()));
   }
 
   /**
@@ -216,8 +231,6 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends DefaultCode
       if (pathItems != null) {
         for (Map.Entry<String, PathItem> e : pathItems.entrySet()) {
           for (Map.Entry<PathItem.HttpMethod, Operation> op : e.getValue().readOperationsMap().entrySet()) {
-            System.out.println("=========== This is tags! " + op.getValue().getTags());
-            System.out.println("=========== This is key! " + op.getKey());
             List<String> tags = new ArrayList<String>();
             tags.add(getOrGenerateOperationId(op.getValue(), e.getKey(), op.getKey().toString()));
             op.getValue().setTags(tags);
