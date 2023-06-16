@@ -5,6 +5,8 @@ import type { Configuration } from './configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import type { AxiosPromise, AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
+// @ts-ignore
+import { serializeDataIfNeeded, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, toPathString } from './common';
 import globalAxios from 'axios';
 
 export const BASE_PATH = "{{{basePath}}}".replace(/\/+$/, "");
@@ -26,9 +28,29 @@ export const COLLECTION_FORMATS = {
  * @interface RequestArgs
  */
 export interface RequestArgs {
-    url: string;
+    urlObj: URL;
     options: AxiosRequestConfig;
+    authType?: AuthTypeEnum;
+    authKey?: string | [ string, string[] ];
+    serializeData?: unknown
 }
+
+export interface ApiConfig {
+  axios: AxiosInstance;
+  configuration?: Configuration;
+}
+
+export const AuthTypeEnum = {
+  Basic: 'basic',
+  Bearer: 'bearer',
+  Oauth: 'oath',
+  InHeader: 'inHeader',
+  InQuery: 'inQuery'
+} as const;
+
+export type AuthTypeEnum = typeof AuthTypeEnum[keyof typeof AuthTypeEnum];
+
+export type ActionType = <T>(config?: T | any, axiosRequest?: AxiosRequestConfig) => Promise<RequestArgs>;
 
 /**
  * Base API to store config, basepath and axios instance.
@@ -37,18 +59,46 @@ export interface RequestArgs {
  */
 export class BaseAPI {
     protected configuration: Configuration | undefined;
-
+    protected axios: AxiosInstance;
   /**
    * Constructor to create baseAPI.
-   * @param { Configuration } configuration optional configuration for each request made with this API.
    * @param { string } basePath basePath of api requests.
-   * @param { AxiosInstance } axios axios instance, global one is used as fallback
+   * @param { { axios: AxiosInstance, configuration: Configuration } } config to be passed down to axios.
+   * @param { Record<string, ActionType> } object with actions to send with axios.
    */
-    constructor(configuration?: Configuration, protected basePath: string = BASE_PATH, protected axios: AxiosInstance = globalAxios) {
-        if (configuration) {
-            this.configuration = configuration;
-            this.basePath = configuration.basePath || this.basePath;
+    constructor(protected basePath: string = BASE_PATH, config: ApiConfig = { axios: globalAxios }, public actions: Record<string, ActionType>) {
+        this.axios = config.axios;
+        if (config.configuration) {
+            this.configuration = config.configuration;
+            this.basePath = config.configuration.basePath || this.basePath;
         }
+        Object.entries(actions).forEach((entry: [string, ActionType]) => {
+          Object.assign(this, {
+            [entry[0]]: entry[1]
+          })
+        })
+    }
+
+    private async authConfig({ authType, urlObj, options, authKey }: RequestArgs) {
+      if (authType === AuthTypeEnum.InQuery && typeof authKey === 'string') {
+        const localVarQueryParameter = {};
+        await setApiKeyToObject(localVarQueryParameter, authKey, this.configuration);
+        setSearchParams(urlObj, localVarQueryParameter);
+      } else if (authType === AuthTypeEnum.InHeader && typeof authKey === 'string') {
+        const localVarHeaderParameter = {};
+        await setApiKeyToObject(localVarHeaderParameter, authKey, this.configuration)
+        options.headers = { ...options.headers, ...localVarHeaderParameter };
+      } else if (authType === AuthTypeEnum.Basic) {
+        setBasicAuthToObject(options, this.configuration)
+      } else if (authType === AuthTypeEnum.Bearer) {
+        const localVarHeaderParameter = {};
+        await setBearerAuthToObject(localVarHeaderParameter, this.configuration);
+        options.headers = { ...options.headers, ...localVarHeaderParameter };
+      } else if (authType === AuthTypeEnum.Oauth) {
+        const localVarHeaderParameter = {};
+        await setOAuthToObject(localVarHeaderParameter, (authKey as [string, string[]])[0], (authKey as [string, string[]])[1], this.configuration);
+        options.headers = { ...options.headers, ...localVarHeaderParameter };
+      }
     }
 
    /**
@@ -58,8 +108,25 @@ export class BaseAPI {
    * @returns {Promise<AxiosResponse<T>>} promisable axios response.
    */
     public async sendRequest<T>(request: Promise<RequestArgs>, axios?: AxiosInstance, basePath?: string): Promise<AxiosResponse<T>> {
-      const axiosRequestArgs = { ...(await request).options, url: (this.basePath || basePath) + (await request).url };
+      const {authType, urlObj, options, authKey, serializeData} = await request;
+      await this.authConfig({ authType, urlObj, options, authKey });
+      if (serializeData) {
+        options.data = serializeDataIfNeeded(serializeData, options, this.configuration)
+      }
+      const axiosRequestArgs = { ...options, url: (this.basePath || basePath) + toPathString(urlObj) };
       return (axios || this.axios).request<T>(axiosRequestArgs);
+    }
+
+    /**
+     * Method to register new action.
+     * @param { ActionType } toRegister object with new actions to register
+     */
+    public register(toRegister: Record<string, ActionType>): void {
+      Object.entries(toRegister).forEach((entry: [string, ActionType]) => {
+        Object.assign(this, {
+          [entry[0]]: entry[1]
+        })
+      })
     }
 };
 

@@ -1,10 +1,15 @@
 // @ts-ignore
 import type { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
 // @ts-ignore
-import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from '../base/common';
-import type { RequestArgs } from '../base/base';
+import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from '../utils/common';
+import type { RequestArgs } from '../utils/base';
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from '../base/base';
+import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, AuthTypeEnum } from '../utils/base';
+import { Configuration } from '../utils/configuration';
+
+// @ts-ignore
+import type { {{#imports}}{{classname}}{{^-last}}, {{/-last}}{{/imports}} } from '../types';
+
 
 {{#models}}
 {{#model}}{{#isEnum}}{{>modelEnum}}{{/isEnum}}{{#oneOf}}{{#-first}}{{>modelOneOf}}{{/-first}}{{/oneOf}}{{^isEnum}}{{^oneOf}}{{>modelGeneric}}{{/oneOf}}{{/isEnum}}{{/model}}
@@ -18,13 +23,13 @@ export type {{operationIdCamelCase}}Params = {
   {{#allParams}}
   /**
   * {{{description}}}
-  * @type {{=<% %>=}}{ <%={{ }}=%>{{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{#lambda.lowercase}}{{{dataType}}}{{/lambda.lowercase}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}{{=<% %>=}} }<%={{ }}=%>
+  * @type {{=<% %>=}}{ <%={{ }}=%>{{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}{{=<% %>=}} }<%={{ }}=%>
   * @memberof {{classname}}
 {{#deprecated}}
   * @deprecated
 {{/deprecated}}
   */
-  {{paramName}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{#lambda.lowercase}}{{{dataType}}}{{/lambda.lowercase}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}{{^-last}}, {{/-last}}
+  {{paramName}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}{{^-last}}, {{/-last}}
   {{/allParams}}
 }
 {{#allParams}}
@@ -33,14 +38,14 @@ export type {{operationIdCamelCase}}Params = {
   * @export
   * @enum {string}
   */
-export enum {{operationIdCamelCase}}{{enumName}} {
+export const {{operationIdCamelCase}}{{enumName}} = {
 {{#allowableValues}}
     {{#enumVars}}
-    {{{name}}} = {{{value}}}{{^-last}},{{/-last}}
+    {{{name}}}: {{{value}}}{{^-last}},{{/-last}}
     {{/enumVars}}
 {{/allowableValues}}
-}
-export type {{operationIdCamelCase}}{{enumName}}Type = typeof {{operationIdCamelCase}}{{enumName}}[keyof typeof {{operationIdCamelCase}}{{enumName}}];
+} as const;
+export type {{operationIdCamelCase}}{{enumName}} = typeof {{operationIdCamelCase}}{{enumName}}[keyof typeof {{operationIdCamelCase}}{{enumName}}];
 {{/isEnum}}
 {{/allParams}}
 {{/allParams.0}}
@@ -76,7 +81,7 @@ export const {{nickname}}ParamCreator = async ({{#allParams}}{{paramName}}{{^req
 * @deprecated{{/isDeprecated}}
 * @throws {RequiredError}
 */
-export const {{nickname}}ParamCreator = async ({{#allParams.0}}{{=<% %>=}}{<%#allParams%><%#-first%> <%/-first%><%paramName%><%^-last%>, <%/-last%> <%/allParams%>}:<%={{ }}=%> {{operationIdCamelCase}}Params = {}, {{/allParams.0}}options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+export const {{nickname}}ParamCreator = async ({{#allParams.0}}{{=<% %>=}}{<%#allParams%><%#-first%> <%/-first%><%paramName%><%^-last%>, <%/-last%> <%/allParams%>}:<%={{ }}=%> {{operationIdCamelCase}}Params, {{/allParams.0}}options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
 {{/listParam}}
 {{#allParams}}
 {{#required}}
@@ -93,30 +98,6 @@ export const {{nickname}}ParamCreator = async ({{#allParams.0}}{{=<% %>=}}{<%#al
     const localVarQueryParameter = {} as any;{{#vendorExtensions}}{{#hasFormParams}}
     const localVarFormParams = new {{^multipartFormData}}URLSearchParams(){{/multipartFormData}}{{#multipartFormData}}((configuration && configuration.formDataCtor) || FormData)(){{/multipartFormData}};{{/hasFormParams}}{{/vendorExtensions}}
 
-{{#authMethods}}
-    // authentication {{name}} required
-    {{#isApiKey}}
-    {{#isKeyInHeader}}
-    await setApiKeyToObject(localVarHeaderParameter, "{{keyParamName}}", configuration)
-    {{/isKeyInHeader}}
-    {{#isKeyInQuery}}
-    await setApiKeyToObject(localVarQueryParameter, "{{keyParamName}}", configuration)
-    {{/isKeyInQuery}}
-    {{/isApiKey}}
-    {{#isBasicBasic}}
-    // http basic authentication required
-    setBasicAuthToObject(localVarRequestOptions, configuration)
-    {{/isBasicBasic}}
-    {{#isBasicBearer}}
-    // http bearer authentication required
-    await setBearerAuthToObject(localVarHeaderParameter, configuration)
-    {{/isBasicBearer}}
-    {{#isOAuth}}
-    // oauth required
-    await setOAuthToObject(localVarHeaderParameter, "{{name}}", [{{#scopes}}"{{{scope}}}"{{^-last}}, {{/-last}}{{/scopes}}], configuration)
-    {{/isOAuth}}
-
-{{/authMethods}}
 {{#queryParams}}
     {{#isArray}}
     if ({{paramName}}) {
@@ -225,13 +206,42 @@ export const {{nickname}}ParamCreator = async ({{#allParams.0}}{{=<% %>=}}{<%#al
 {{#hasFormParams}}
     localVarRequestOptions.data = localVarFormParams{{#vendorExtensions}}{{^multipartFormData}}.toString(){{/multipartFormData}}{{/vendorExtensions}};
 {{/hasFormParams}}
-{{#bodyParam}}
-    localVarRequestOptions.data = serializeDataIfNeeded({{paramName}}, localVarRequestOptions, configuration)
-{{/bodyParam}}
 
     return {
-        url: toPathString(localVarUrlObj),
+        urlObj: localVarUrlObj,
         options: localVarRequestOptions,
+        {{#bodyParam}}
+        serializeData: {{paramName}},
+        {{/bodyParam}}
+        {{#authMethods}}
+        // authentication {{name}} required
+        {{#isApiKey}}
+        {{#isKeyInHeader}}
+        // in header with key required
+        authType: AuthTypeEnum.InHeader,
+        authKey: "{{keyParamName}}"
+        {{/isKeyInHeader}}
+        {{#isKeyInQuery}}
+        // in query with key auth required
+        authType: AuthTypeEnum.InQuery,
+        authKey: "{{keyParamName}}"
+        {{/isKeyInQuery}}
+        {{/isApiKey}}
+        {{#isBasicBasic}}
+        // http basic authentication required
+        authType: AuthTypeEnum.Basic,
+        {{/isBasicBasic}}
+        {{#isBasicBearer}}
+        // bearer auth required
+        authType: AuthTypeEnum.Bearer,
+        {{/isBasicBearer}}
+        {{#isOAuth}}
+        // oauth required
+        authType: AuthTypeEnum.Oauth,
+        authKey: ["{{name}}", [{{#scopes}}"{{{scope}}}"{{^-last}}, {{/-last}}{{/scopes}}]]
+        {{/isOAuth}}
+
+        {{/authMethods}}
     };
 }
 {{/operation}}

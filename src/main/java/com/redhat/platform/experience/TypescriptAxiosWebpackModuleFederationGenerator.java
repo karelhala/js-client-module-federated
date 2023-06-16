@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CaseUtils;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.languages.AbstractTypeScriptClientCodegen;
+import org.openapitools.codegen.languages.TypeScriptAxiosClientCodegen;
 import org.openapitools.codegen.meta.features.DocumentationFeature;
 import org.openapitools.codegen.meta.features.SecurityFeature;
 
@@ -22,7 +23,7 @@ import org.openapitools.codegen.model.OperationMap;
 import org.openapitools.codegen.model.OperationsMap;
 import org.openapitools.codegen.utils.ModelUtils;
 
-public class TypescriptAxiosWebpackModuleFederationGenerator extends AbstractTypeScriptClientCodegen {
+public class TypescriptAxiosWebpackModuleFederationGenerator extends TypeScriptAxiosClientCodegen {
 
   // source folder where to write the files
   protected String sourceFolder = "src";
@@ -76,16 +77,6 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends AbstractTyp
     outputFolder = "generated-code/typescript-axios-webpack-module-federation";
 
     /**
-     * Models.  You can write model files using the modelTemplateFiles map.
-     * if you want to create one template for file, you can do so here.
-     * for multiple files for model, just put another entry in the `modelTemplateFiles` with
-     * a different extension
-     */
-    modelTemplateFiles.put(
-      "model.mustache", // the template to use
-      ".ts");       // the extension for each file to write
-
-    /**
      * Api classes.  You can write classes for each Api file with the apiTemplateFiles map.
      * as with models, add multiple entries with different extensions for multiple files per
      * class
@@ -128,11 +119,11 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends AbstractTyp
       "index.ts")                                          // the output file
     );
     supportingFiles.add(new SupportingFile("common.mustache",
-      "base",                         
+      "utils",                         
       "common.ts")   
     );
     supportingFiles.add(new SupportingFile("baseApi.mustache",
-    "base",
+    "utils",
     "base.ts") 
     );
     supportingFiles.add(new SupportingFile("indexTypes.mustache",
@@ -140,31 +131,21 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends AbstractTyp
     "index.ts")
     );
     supportingFiles.add(new SupportingFile("configuration.mustache",
-    "base",
+    "utils",
     "configuration.ts")
     );
     supportingFiles.add(new SupportingFile("baseIndex.mustache",
-    "base",
+    "utils",
     "index.ts")
     );
     supportingFiles.add(new SupportingFile("package.mustache",
-    "base",
+    "utils",
     "package.json")
     );
     supportingFiles.add(new SupportingFile(".npmignore", "", ".npmignore").doNotOverwrite());
     supportingFiles.add(new SupportingFile("package.json", "", "package.json").doNotOverwrite());
     supportingFiles.add(new SupportingFile("tsconfig-cjs.json", "", "tsconfig-cjs.json").doNotOverwrite());
     supportingFiles.add(new SupportingFile("tsconfig-esm.json", "", "tsconfig-esm.json").doNotOverwrite());
-
-    /**
-     * Language Specific Primitives.  These types will not trigger imports by
-     * the client generator
-     */
-    languageSpecificPrimitives = new HashSet<String>(
-      Arrays.asList(
-        "Type1",      // replace these with your types
-        "Type2")
-    );
 
     this.cliOptions.add(new CliOption(LIST_PARAM, "Setting this property to true will generate APIs with list of params.", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.TRUE.toString()));
   }
@@ -350,11 +331,31 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends AbstractTyp
 
         // Deduce the model file name in kebab case
         cm.classFilename = cm.classname.replaceAll("([a-z0-9])([A-Z])", "$1-$2").toLowerCase(Locale.ROOT);
-
-        System.out.println("==========");
-        System.out.println("==========This is CM ->" + cm);
-        System.out.println("==========");
     }
+
+    for (ModelMap mo  : models) {
+      CodegenModel cm = mo.getModel();
+
+      // Deduce the model file name in kebab case
+      cm.classFilename = cm.classname.replaceAll("([a-z0-9])([A-Z])", "$1-$2").toLowerCase(Locale.ROOT);
+
+      cm.imports = new TreeSet<>(cm.imports);
+      // name enum with model name, e.g. StatusEnum => PetStatusEnum
+      for (CodegenProperty var : cm.vars) {
+          if (Boolean.TRUE.equals(var.isEnum)) {
+              var.datatypeWithEnum = var.datatypeWithEnum.replace(var.enumName, cm.classname + var.enumName);
+              var.enumName = var.enumName.replace(var.enumName, cm.classname + var.enumName);
+          }
+      }
+      if (cm.parent != null) {
+          for (CodegenProperty var : cm.allVars) {
+              if (Boolean.TRUE.equals(var.isEnum)) {
+                  var.datatypeWithEnum = var.datatypeWithEnum.replace(var.enumName, cm.classname + var.enumName);
+                  var.enumName = var.enumName.replace(var.enumName, cm.classname + var.enumName);
+              }
+          }
+      }
+  }
 
     // Apply the model file name to the imports as well
     for (Map<String, String> m : objs.getImports()) {
