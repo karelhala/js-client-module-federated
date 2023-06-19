@@ -64,19 +64,18 @@ export class BaseAPI {
    * Constructor to create baseAPI.
    * @param { string } basePath basePath of api requests.
    * @param { { axios: AxiosInstance, configuration: Configuration } } config to be passed down to axios.
-   * @param { Record<string, ActionType> } object with actions to send with axios.
    */
-    constructor(protected basePath: string = BASE_PATH, config: ApiConfig = { axios: globalAxios }, public actions: Record<string, ActionType>) {
+    constructor(protected basePath: string = BASE_PATH, config: ApiConfig = { axios: globalAxios }) {
         this.axios = config.axios;
         if (config.configuration) {
             this.configuration = config.configuration;
             this.basePath = config.configuration.basePath || this.basePath;
         }
-        Object.entries(actions).forEach((entry: [string, ActionType]) => {
-          Object.assign(this, {
-            [entry[0]]: entry[1]
-          })
-        })
+        // Object.entries(actions).forEach((entry: [string, ActionType]) => {
+        //   Object.assign(this, {
+        //     [entry[0]]: entry[1]
+        //   })
+        // })
     }
 
     private async authConfig({ authType, urlObj, options, authKey }: RequestArgs) {
@@ -117,18 +116,42 @@ export class BaseAPI {
       return (axios || this.axios).request<T>(axiosRequestArgs);
     }
 
-    /**
-     * Method to register new action.
-     * @param { ActionType } toRegister object with new actions to register
-     */
-    public register(toRegister: Record<string, ActionType>): void {
-      Object.entries(toRegister).forEach((entry: [string, ActionType]) => {
-        Object.assign(this, {
-          [entry[0]]: entry[1]
-        })
-      })
-    }
+    // /**
+    //  * Method to register new action.
+    //  * @param { ActionType } toRegister object with new actions to register
+    //  */
+    // public register(toRegister: Record<string, ActionType>): void {
+    //   Object.entries(toRegister).forEach((entry: [string, ActionType]) => {
+    //     Object.assign(this, {
+    //       [entry[0]]: entry[1]
+    //     })
+    //   })
+    // }
 };
+
+/**
+ * 
+ * Factory for creating API with option to add enpoints to the API.
+ * @param basePath basePath of api requests.
+ * @param { { axios: AxiosInstance, configuration: Configuration } } config to be passed down to axios.
+ * @param actions object with actions to send with axios.
+ * @returns created base API.
+ */
+export const APIFactory = (basePath: string = BASE_PATH, config: ApiConfig = { axios: globalAxios }, actions: Record<string, ActionType>): BaseAPI => {
+  const api = new BaseAPI(basePath, config);
+  for (const key of Object.keys(actions) as Array<keyof BaseAPI>) {
+    const method = actions[key];
+    api[key] = (...args) => {
+      const request: Promise<RequestArgs> = method(...args as any);
+      return api.sendRequest(request);
+    };
+  }
+
+  return api;
+}
+
+export default APIFactory;
+
 
 /**
  *

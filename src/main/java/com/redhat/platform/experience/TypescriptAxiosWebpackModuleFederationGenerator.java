@@ -141,7 +141,6 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends TypeScriptA
     "utils",
     "package.json")
     );
-    supportingFiles.add(new SupportingFile(".npmignore", "", ".npmignore").doNotOverwrite());
     supportingFiles.add(new SupportingFile("package.json", "", "package.json").doNotOverwrite());
     supportingFiles.add(new SupportingFile("tsconfig-cjs.json", "", "tsconfig-cjs.json").doNotOverwrite());
     supportingFiles.add(new SupportingFile("tsconfig-esm.json", "", "tsconfig-esm.json").doNotOverwrite());

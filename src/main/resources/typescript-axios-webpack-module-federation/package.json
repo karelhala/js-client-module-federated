@@ -1,6 +1,6 @@
 {
   "name": "@khala/js-client-module-federation-out",
-  "version": "0.0.3",
+  "version": "0.0.13",
   "description": "FooBar",
   "main": "index.js",
   "module": "esm/index.js",

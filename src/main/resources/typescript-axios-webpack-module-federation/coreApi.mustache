@@ -18,7 +18,6 @@ import type { {{#imports}}{{classname}}{{^-last}}, {{/-last}}{{/imports}} } from
 {{^listParam}}
 {{#operations}}
 {{#operation}}
-{{#allParams.0}}
 export type {{operationIdCamelCase}}Params = {
   {{#allParams}}
   /**
@@ -29,8 +28,9 @@ export type {{operationIdCamelCase}}Params = {
   * @deprecated
 {{/deprecated}}
   */
-  {{paramName}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}{{^-last}}, {{/-last}}
+  {{paramName}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}, 
   {{/allParams}}
+  options?: AxiosRequestConfig
 }
 {{#allParams}}
 {{#isEnum}}
@@ -48,29 +48,15 @@ export const {{operationIdCamelCase}}{{enumName}} = {
 export type {{operationIdCamelCase}}{{enumName}} = typeof {{operationIdCamelCase}}{{enumName}}[keyof typeof {{operationIdCamelCase}}{{enumName}}];
 {{/isEnum}}
 {{/allParams}}
-{{/allParams.0}}
 {{/operation}}
 {{/operations}}
 {{/listParam}}
 
 {{#operations}}
 {{#operation}}
-{{#listParam}}
-/**
-* {{&notes}}
-{{#summary}}
-* @summary {{&summary}}
-{{/summary}}
-{{#allParams}}
-* @param {{=<% %>=}}{<%#isEnum%><%&datatypeWithEnum%><%/isEnum%><%^isEnum%><%&dataType%><%#isNullable%> | null<%/isNullable%><%/isEnum%>}<%={{ }}=%> {{^required}}[{{/required}}{{paramName}}{{^required}}]{{/required}} {{description}}
-{{/allParams}}
-* @param {*} [options] Override http request option.{{#isDeprecated}}
-* @deprecated{{/isDeprecated}}
-* @throws {RequiredError}
-*/
-export const {{nickname}}ParamCreator = async ({{#allParams}}{{paramName}}{{^required}}?{{/required}}: {{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}, {{/allParams}}options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-{{/listParam}}
-{{^listParam}}
+const is{{operationIdCamelCase}}ObjectParams = (params: [{{operationIdCamelCase}}Params] | unknown[]): params is [{{operationIdCamelCase}}Params] => {
+  return params.length === 1{{#allParams}} && {{^required}}true{{/required}}{{#required}}Object.prototype.hasOwnProperty.call(params, '{{paramName}}'){{/required}}{{/allParams}}
+}
 /**
 * {{&notes}}
 {{#summary}}
@@ -81,13 +67,10 @@ export const {{nickname}}ParamCreator = async ({{#allParams}}{{paramName}}{{^req
 * @deprecated{{/isDeprecated}}
 * @throws {RequiredError}
 */
-export const {{nickname}}ParamCreator = async ({{#allParams.0}}{{=<% %>=}}{<%#allParams%><%#-first%> <%/-first%><%paramName%><%^-last%>, <%/-last%> <%/allParams%>}:<%={{ }}=%> {{operationIdCamelCase}}Params, {{/allParams.0}}options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-{{/listParam}}
+export const {{nickname}}ParamCreator = async (...config: ([{{operationIdCamelCase}}Params] | [{{#allParams}}{{#isEnum}}{{{datatypeWithEnum}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{#isNullable}} | null{{/isNullable}}{{/isEnum}}, {{/allParams}}AxiosRequestConfig])): Promise<RequestArgs> => {
+    const params = is{{operationIdCamelCase}}ObjectParams(config) ? config[0] : [{{#allParams}}'{{paramName}}', {{/allParams}}'options'].reduce((acc, curr, index) => ({ ...acc, [curr]: config[index] }), {}) as {{operationIdCamelCase}}Params;
+    const { {{#allParams}}{{paramName}}, {{/allParams}}options = {} } = params;
 {{#allParams}}
-{{#required}}
-    // verify required parameter '{{paramName}}' is not null or undefined
-    assertParamExists('{{nickname}}', '{{paramName}}', {{paramName}})
-{{/required}}
 {{/allParams}}
     const localVarPath = `{{{path}}}`{{#pathParams}}
         .replace(`{${"{{baseName}}"}}`, encodeURIComponent(String({{paramName}}))){{/pathParams}};
@@ -244,5 +227,7 @@ export const {{nickname}}ParamCreator = async ({{#allParams.0}}{{=<% %>=}}{<%#al
         {{/authMethods}}
     };
 }
+
+export default {{nickname}}ParamCreator;
 {{/operation}}
 {{/operations}}
