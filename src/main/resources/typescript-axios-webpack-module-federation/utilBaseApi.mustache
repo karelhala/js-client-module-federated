@@ -52,7 +52,7 @@ export const AuthTypeEnum = {
 
 export type AuthTypeEnum = typeof AuthTypeEnum[keyof typeof AuthTypeEnum];
 
-export type ActionType = <T>(config?: T | any, axiosRequest?: AxiosRequestConfig) => Promise<RequestArgs>;
+export type ActionType = (...config: any) => Promise<RequestArgs>;
 
 /**
  * Base API to store config, basepath and axios instance.
@@ -142,7 +142,7 @@ export class BaseAPI {
  * @param actions object with actions to send with axios.
  * @returns created base API.
  */
-export const APIFactory = (basePath: string = BASE_PATH, config: ApiConfig = { axios: globalAxios }, actions: Record<string, ActionType>): BaseAPI => {
+export const APIFactory = <T>(basePath: string = BASE_PATH, config: ApiConfig = { axios: globalAxios }, actions: Record<string, ActionType>) => {
   const api = new BaseAPI(basePath, config);
   for (const key of Object.keys(actions) as Array<keyof BaseAPI>) {
     const method = actions[key];
@@ -152,8 +152,9 @@ export const APIFactory = (basePath: string = BASE_PATH, config: ApiConfig = { a
     };
   }
 
-  return api;
+  return api as T & BaseAPI;
 }
+
 
 export default APIFactory;
 
