@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "mvn clean package -DskipTests && npm run generate",
+    "build": "mvn clean package -DskipTests && npm run generate && npm run generate:inventory",
     "generate": "openapi-generator-cli generate -i ./doc/simple.yml -o ./out --skip-validate-spec --custom-generator=./target/typescript-axios-webpack-module-federation-openapi-generator-1.0.0.jar -g typescript-axios-webpack-module-federation",
-    "generate:ts": "openapi-generator-cli generate -i ./doc/simple.yml -o ./ref --skip-validate-spec -g typescript-axios --additional-properties=withStringEnums=false"
+    "generate:inventory": "openapi-generator-cli generate -i ./doc/inventory.yml -o ./out2 --skip-validate-spec --custom-generator=./target/typescript-axios-webpack-module-federation-openapi-generator-1.0.0.jar -g typescript-axios-webpack-module-federation",
+    "generate:ts": "openapi-generator-cli generate -i ./doc/inventory.yml -o ./ref --skip-validate-spec -g typescript-axios --additional-properties=withStringEnums=false"
   },
   "repository": {
     "type": "git",

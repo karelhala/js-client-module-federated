@@ -30,8 +30,10 @@ export const COLLECTION_FORMATS = {
 export interface RequestArgs {
     urlObj: URL;
     options: AxiosRequestConfig;
-    authType?: AuthTypeEnum;
-    authKey?: string | [ string, string[] ];
+    auth?: {
+      authType: AuthTypeEnum;
+      authKey?: string | [ string, string[] ];
+    }[],
     serializeData?: unknown
 }
 
@@ -78,7 +80,7 @@ export class BaseAPI {
         // })
     }
 
-    private async authConfig({ authType, urlObj, options, authKey }: RequestArgs) {
+    private async authConfig({ authType, urlObj, options, authKey }: Omit<RequestArgs, 'authType' | 'authKey'> & { authKey?: string | [ string, string[] ], authType: AuthTypeEnum }) {
       if (authType === AuthTypeEnum.InQuery && typeof authKey === 'string') {
         const localVarQueryParameter = {};
         await setApiKeyToObject(localVarQueryParameter, authKey, this.configuration);
@@ -107,8 +109,11 @@ export class BaseAPI {
    * @returns {Promise<AxiosResponse<T>>} promisable axios response.
    */
     public async sendRequest<T>(request: Promise<RequestArgs>, axios?: AxiosInstance, basePath?: string): Promise<AxiosResponse<T>> {
-      const {authType, urlObj, options, authKey, serializeData} = await request;
-      await this.authConfig({ authType, urlObj, options, authKey });
+      const {auth, urlObj, options, serializeData} = await request;
+      auth?.forEach(async ({ authType, authKey }) => {
+        await this.authConfig({ authType, urlObj, options, authKey });
+      })
+      
       if (serializeData) {
         options.data = serializeDataIfNeeded(serializeData, options, this.configuration)
       }

@@ -15,12 +15,18 @@ import io.swagger.v3.parser.util.SchemaTypeUtil;
 
 import java.util.*;
 import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 
 import org.openapitools.codegen.model.ModelMap;
 import org.openapitools.codegen.model.ModelsMap;
 import org.openapitools.codegen.model.OperationMap;
 import org.openapitools.codegen.model.OperationsMap;
 import org.openapitools.codegen.utils.ModelUtils;
+
+import com.google.common.collect.ImmutableMap;
+import com.samskivert.mustache.Mustache;
+import com.samskivert.mustache.Template;
 
 public class TypescriptAxiosWebpackModuleFederationGenerator extends TypeScriptAxiosClientCodegen {
 
@@ -363,4 +369,21 @@ public class TypescriptAxiosWebpackModuleFederationGenerator extends TypeScriptA
     }
     return objs;
   }
+
+  @Override
+    protected ImmutableMap.Builder<String, Mustache.Lambda> addMustacheLambdas() {
+        return super.addMustacheLambdas()
+            .put("prependNot", new ReplaceDotsWithUnderscoreLambda());
+    }
+
+    private static class ReplaceDotsWithUnderscoreLambda implements Mustache.Lambda {
+      @Override
+      public void execute(Template.Fragment fragment, Writer writer) throws IOException {
+        if (fragment.execute().indexOf("!") != -1) {
+          writer.write("Not" + fragment.execute().split("~")[0]);
+        } else {
+          writer.write(fragment.execute().split("~")[0]);
+        }
+      }
+    }
 }

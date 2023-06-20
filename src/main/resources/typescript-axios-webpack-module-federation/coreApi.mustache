@@ -10,7 +10,6 @@ import { Configuration } from '../utils/configuration';
 // @ts-ignore
 import type { {{#imports}}{{classname}}{{^-last}}, {{/-last}}{{/imports}} } from '../types';
 
-
 {{#models}}
 {{#model}}{{#isEnum}}{{>modelEnum}}{{/isEnum}}{{#oneOf}}{{#-first}}{{>modelOneOf}}{{/-first}}{{/oneOf}}{{^isEnum}}{{^oneOf}}{{>modelGeneric}}{{/oneOf}}{{/isEnum}}{{/model}}
 {{/models}}
@@ -41,7 +40,7 @@ export type {{operationIdCamelCase}}Params = {
 export const {{operationIdCamelCase}}{{enumName}} = {
 {{#allowableValues}}
     {{#enumVars}}
-    {{{name}}}: {{{value}}}{{^-last}},{{/-last}}
+    {{#lambda.prependNot}}{{{name}}}~{{{value}}}{{/lambda.prependNot}}: {{{value}}}{{^-last}},{{/-last}}
     {{/enumVars}}
 {{/allowableValues}}
 } as const;
@@ -196,7 +195,10 @@ export const {{nickname}}ParamCreator = async (...config: ([{{operationIdCamelCa
         {{#bodyParam}}
         serializeData: {{paramName}},
         {{/bodyParam}}
+        {{#authMethods.0}}
+        auth:[
         {{#authMethods}}
+        {
         // authentication {{name}} required
         {{#isApiKey}}
         {{#isKeyInHeader}}
@@ -223,8 +225,10 @@ export const {{nickname}}ParamCreator = async (...config: ([{{operationIdCamelCa
         authType: AuthTypeEnum.Oauth,
         authKey: ["{{name}}", [{{#scopes}}"{{{scope}}}"{{^-last}}, {{/-last}}{{/scopes}}]]
         {{/isOAuth}}
-
+        }{{^-last}}, {{/-last}}
         {{/authMethods}}
+        ]
+        {{/authMethods.0}}
     };
 }
 
