@@ -142,22 +142,20 @@ export class BaseAPI {
  * @param actions object with actions to send with axios.
  * @returns created base API.
  */
-export const APIFactory = <T>(basePath: string = BASE_PATH, config: ApiConfig = { axios: globalAxios }, actions: Record<string, ActionType>) => {
+export const APIFactory = <T extends Record<string, ActionType>>(basePath: string = BASE_PATH, config: ApiConfig = { axios: globalAxios }, actions: T) => {
   const api = new BaseAPI(basePath, config);
-  for (const key of Object.keys(actions) as Array<keyof BaseAPI>) {
+  for (const key of Object.keys(actions)) {
     const method = actions[key];
-    api[key] = (...args) => {
+    Object.assign(api, { [key]: (...args: unknown[]) => {
       const request: Promise<RequestArgs> = method(...args as any);
       return api.sendRequest(request);
-    };
+    } });
   }
 
-  return api as T & BaseAPI;
+  return api as BaseAPI & T;
 }
 
-
 export default APIFactory;
-
 
 /**
  *
